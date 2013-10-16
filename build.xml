@@ -1,0 +1,87 @@
+<!--
+ (c) 2013 KIT, TecO
+
+ Movement Sensor Vector Conversion Job build script
+-->
+
+<project basedir="." default="jar" name="motionvector">
+    <!-- javac properties -->
+    <property name="javac.version" value="1.5" />
+    <property file="${basedir}/build.properties" />
+    <property environment="env"/>
+
+
+    <!-- default directories for hadoop and hstreaming jars -->
+    <property name="mahout.dir" value="mahout-0.8" />
+    <property name="hadoop.home" value="${env.HADOOP_HOME}" /> 
+
+    <property name="mahout-core.jarfile" value="${mahout.dir}/mahout-core-${mahout.version}-job.jar" />
+    <property name="mahout-math.jarfile" value="${mahout.dir}/mahout-math-${mahout.version}.jar" />    
+    <!-- build properties -->
+    <property name="output.name" value="teco-motionvector-${mahout.version}.jar" />
+    <property name="src.dir" value="src/" />
+    <property name="lib.dir" value="lib/" />
+    <property name="build.dir" value="${basedir}/build" />
+    <property name="build.classes" value="${build.dir}/classes" />
+
+
+
+    <path id="motionvector.classpath">
+        <pathelement location="${build.classes}"/>
+        <pathelement location="${mahout-core.jarfile}"/>
+        
+        <fileset dir="${hadoop.home}">
+            <include name="lib/**.jar" />
+            <include name="hadoop-*core*.jar" />
+        </fileset>
+    </path>
+
+     <target name="assert-jars">
+         <fail>
+             <condition >
+                 <not>
+                     <available file="${hadoop.home}/bin/hadoop" />
+                 </not>
+             </condition>
+             Not found: "${hadoop.home}/bin/hadoop". Please edit build.properties and make sure hadoop.home (currently "${hadoop.home}") points to a hadoop distribution.
+
+         </fail>
+         <fail>
+             <condition >
+                 <not>
+                     <available file="${mahout-core.jarfile}" />
+                 </not>
+             </condition>
+             Not found: "${mahout-core.jarfile}". Please make sure mahout.dir (currently "${mahout.dir}") points to the directory where Mahout core and contrib jars live, e.g. by supplying -Dmahout.dir="/path/to/mahout/" on the command line
+         </fail>
+     </target>
+
+    <target name="init" depends="assert-jars">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${build.classes}"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="build"/>
+        <delete file="${output.name}"/>
+    </target>
+
+    <target  name="compile" depends="init" description="Compiles Job jar">
+        <echo> *** Compiling MotionVector Job ***</echo>
+        <javac srcdir="${src.dir}" destdir="${build.classes}" source="${javac.version}"
+        target="${javac.version}" debug="true" debuglevel="lines,vars,source">
+            <classpath refid="motionvector.classpath"/>
+        </javac>
+    </target>
+    <target depends="compile" name="jar" description="Create Job jar file">
+        <echo> *** Creating teco-motionvector.jar ***</echo>
+      <jar destfile="${output.name}">
+        <fileset dir="${build.classes}"/>
+        <manifest>
+              <attribute name="Main-Class" value="edu/teco/hadoop/motionvector/Driver"/>
+        </manifest>
+        <zipfileset src="${mahout-core.jarfile}"/>
+        <zipgroupfileset dir="${lib.dir}" includes="*.jar"/> 
+      </jar>
+    </target>
+</project>
