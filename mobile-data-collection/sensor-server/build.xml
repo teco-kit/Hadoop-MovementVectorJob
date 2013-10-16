@@ -1,0 +1,75 @@
+<!--
+ (c) 2013 KIT, TecO
+
+ Movement Sensor Jetty Servlet build script
+-->
+
+<project basedir="." default="jar" name="sensorserver">
+    <!-- javac properties -->
+    <property name="javac.version" value="1.7" />
+    <property file="${basedir}/build.properties" />
+    <property environment="env"/>
+
+    <!-- build properties -->
+    <property name="output.name" value="teco-sensorserver.jar" />
+    <property name="src.dir" value="src/" />
+    <property name="lib.dir" value="lib/" />
+    <property name="build.dir" value="${basedir}/build" />
+    <property name="build.classes" value="${build.dir}/classes" />
+
+
+    <path id="sensorserver.classpath">
+        <pathelement location="${build.classes}"/>
+        <pathelement location="${lib.dir}/jetty/lib/jetty-server-9.0.5.v20130815.jar"/>
+        <pathelement location="${lib.dir}/jetty/lib/jetty-servlet-9.0.5.v20130815.jar"/>
+        <pathelement location="${lib.dir}/jetty/lib/jetty-util-9.0.5.v20130815.jar"/>        
+        <pathelement location="${lib.dir}/jetty/lib/servlet-api-3.0.jar"/>        
+    </path>
+
+     <target name="assert-jars">
+         <fail>
+             <condition >
+                 <not>
+                     <available file="${lib.dir}/jetty/lib/servlet-api-3.0.jar" />
+                 </not>
+             </condition>
+             Not found: "${lib.dir}/jetty/lib/servlet-api-3.0.jar". Please make sure lib.dir (currently "${lib.dir}") points to the directory where Jetty core jars live, e.g. by supplying -lib.dir="/path/to/mahout/" on the command line
+         </fail>
+         <fail>
+             <condition >
+                 <not>
+                     <available file="${lib.dir}/jetty/lib/jetty-server-9.0.5.v20130815.jar" />
+                 </not>
+             </condition>
+             Not found: "${lib.dir}/jetty/lib/jetty-server-9.0.5.v20130815.jar". Please make sure lib.dir (currently "${lib.dir}") points to the directory where Jetty core jars live, e.g. by supplying -lib.dir="/path/to/mahout/" on the command line
+         </fail>
+     </target>
+
+    <target name="init" depends="assert-jars">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${build.classes}"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="build"/>
+        <delete file="${output.name}"/>
+    </target>
+
+    <target  name="compile" depends="init" description="Compiles Server jar">
+        <echo> *** Compiling SensorServer ***</echo>
+        <javac srcdir="${src.dir}" destdir="${build.classes}" debug="true" debuglevel="lines,vars,source" source="${javac.version}"
+        target="${javac.version}">
+            <classpath refid="sensorserver.classpath"/>
+        </javac>
+    </target>
+    <target depends="compile" name="jar" description="Create Server jar file">
+        <echo> *** Creating teco-sensorserver.jar ***</echo>
+      <jar destfile="${output.name}">
+        <fileset dir="${build.classes}"/>
+        <manifest>
+              <attribute name="Main-Class" value="edu/teco/hadoop/sensorserver/SensorServer"/>
+              <attribute name="Class-Path" value="${lib.dir}/jetty/lib/jetty-server-9.0.5.v20130815.jar:${lib.dir}/jetty/lib/jetty-servlet-9.0.5.v20130815.jar:${lib.dir}/jetty/lib/jetty-util-9.0.5.v20130815.jar:${lib.dir}/jetty/lib/servlet-api-3.0.jar:."/>              
+        </manifest>      
+      </jar>
+    </target>
+</project>
